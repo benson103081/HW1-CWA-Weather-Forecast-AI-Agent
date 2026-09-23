@@ -42,9 +42,27 @@ def test_field_paths_include_later_list_fields():
     assert set(fetch.field_paths({"items": [{"a": 1}, {"b": 2}]})) == {"$.items[].a", "$.items[].b"}
 
 
-def test_api_404(monkeypatch, tmp_path):
+@pytest.mark.parametrize("status", [401, 403, 404, 429, 500, 503])
+def test_http_errors_report_status_without_credentials(monkeypatch, tmp_path, status):
     monkeypatch.setattr(fetch, "get_api_key", lambda: "test-key")
-    monkeypatch.setattr(fetch.requests, "get", Mock(return_value=Mock(status_code=404)))
-    with pytest.raises(fetch.FetchError, match="HTTP 404"):
+    response = requests.Response()
+    response.status_code = status
+    response.url = "https://example.invalid/?Authorization=test-key"
+    monkeypatch.setattr(fetch.requests, "get", Mock(return_value=response))
+    with pytest.raises(fetch.FetchError, match=f"HTTP {status}") as error:
         fetch.fetch_forecast(tmp_path / "raw.json")
+    assert "test-key" not in str(error.value)
     assert not (tmp_path / "raw.json").exists()
+
+
+@pytest.mark.parametrize("failure, expected", [
+    (requests.Timeout("secret-key"), "逾時"),
+    (requests.exceptions.SSLError("secret-key"), "TLS"),
+    (requests.ConnectionError("secret-key"), "DNS"),
+])
+def test_network_errors_are_distinguishable(monkeypatch, tmp_path, failure, expected):
+    monkeypatch.setattr(fetch, "get_api_key", lambda: "secret-key")
+    monkeypatch.setattr(fetch.requests, "get", Mock(side_effect=failure))
+    with pytest.raises(fetch.FetchError, match=expected) as error:
+        fetch.fetch_forecast(tmp_path / "raw.json")
+    assert "secret-key" not in str(error.value)

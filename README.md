@@ -129,6 +129,20 @@ requirements-dev.txt   # 額外瀏覽器驗證工具
 
 ## Git
 
+## Streamlit Community Cloud
+
+部署時選擇此儲存庫、`main` 分支、`app.py`，Python 3.12。在 Settings → Secrets 設定根層級的 TOML：
+
+```toml
+CWA_API_KEY = "填入真正的中央氣象署授權碼"
+```
+
+請將引號內文字替換為本機 `.env` 中的授權碼，不要填入範例文字，也不要在前面加 `[section]`。本機 `.env` 不會自動上傳至雲端。修改後儲存，必要時 Reboot app，再按「更新資料」。`.streamlit/secrets.toml` 同樣不得提交。
+
+API 錯誤會顯示 HTTP 狀態：401 為授權失敗；403 為拒絕存取（需確認權限或來源限制）；429 為請求過於頻繁；5xx 為來源服務錯誤。逾時、TLS 與 DNS／網路錯誤分別提示，訊息不包含金鑰或請求網址。雲端 SQLite 是可重建的快取，重啟或重新部署後可能需要再次更新資料。
+
+## Git
+
 遠端：<https://github.com/benson103081/HW1-CWA-Weather-Forecast-AI-Agent.git>，主分支 `main`。
 
 推送前確認：

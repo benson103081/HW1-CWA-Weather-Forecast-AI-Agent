@@ -23,7 +23,7 @@ def main():
         st.stop()
 
     if not get_api_key():
-        st.warning("尚未設定 CWA_API_KEY。請在專案 .env 填入 Key 後按「更新資料」。")
+        st.warning("尚未設定 CWA_API_KEY。請在本機 .env 或 Streamlit Cloud 的 Settings → Secrets 設定後按「更新資料」。")
     if st.button("更新資料", type="primary"):
         try:
             with st.spinner("正在取得最新預報…"):

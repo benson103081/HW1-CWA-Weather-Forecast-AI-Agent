@@ -7,3 +7,5 @@ data/*.db
 data/*.db-*
 data/raw.json
 *.log
+_site/
+.streamlit/secrets.toml

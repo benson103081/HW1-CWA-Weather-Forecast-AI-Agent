@@ -25,16 +25,30 @@ def get_api_key():
 def fetch_forecast(raw_path=RAW_PATH):
     key = get_api_key()
     if not key:
-        raise FetchError("尚未設定 CWA_API_KEY，請在專案 .env 填入中央氣象署 API Key。")
+        raise FetchError("尚未設定 CWA_API_KEY，請在本機 .env 或 Streamlit Cloud 的 Settings → Secrets 填入中央氣象署 API Key。")
     try:
         response = requests.get(
             API_URL, params={"Authorization": key, "format": "JSON"},
             timeout=(10, 45),
         )
-        if response.status_code == 404:
-            raise FetchError("中央氣象署 API 回傳 HTTP 404，指定資料集目前無法取得，請稍後重試或確認服務狀態。")
         response.raise_for_status()
         payload = response.json()
+    except requests.HTTPError as error:
+        status = error.response.status_code if error.response is not None else None
+        messages = {
+            401: "中央氣象署 API 回傳 HTTP 401（授權失敗）。請確認雲端 Secrets 的 CWA_API_KEY 是有效授權碼，並非範例文字。",
+            403: "中央氣象署 API 回傳 HTTP 403（拒絕存取）。請確認授權碼權限；也可能是雲端來源 IP 被限制。",
+            404: "中央氣象署 API 回傳 HTTP 404，指定資料集目前無法取得，請稍後重試或確認服務狀態。",
+            429: "中央氣象署 API 回傳 HTTP 429（請求過於頻繁），請稍後再更新。",
+        }
+        message = messages.get(status, f"中央氣象署 API 回傳 HTTP {status}，請稍後重試。" if status else "中央氣象署 API 回應失敗，請稍後重試。")
+        raise FetchError(message) from None
+    except requests.Timeout:
+        raise FetchError("中央氣象署 API 連線逾時，請稍後重試；若只有雲端失敗，請檢查雲端對外連線。") from None
+    except requests.exceptions.SSLError:
+        raise FetchError("中央氣象署 API 的 TLS 憑證驗證失敗，請確認部署環境的憑證套件與網路設定。") from None
+    except requests.ConnectionError:
+        raise FetchError("無法連線至中央氣象署 API（DNS 或網路連線失敗），請稍後重試。") from None
     except requests.RequestException:
         # requests exceptions may contain the URL and Authorization query value.
         raise FetchError("中央氣象署 API 連線失敗，請檢查網路、Key 或稍後重試。") from None
