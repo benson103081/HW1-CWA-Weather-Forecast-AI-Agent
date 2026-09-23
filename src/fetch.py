@@ -2,12 +2,13 @@
 
 import json
 import os
-import ssl
 from pathlib import Path
 import tempfile
 
 from dotenv import dotenv_values
 import requests
+
+from src.tls import get_cwa, verification_error
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW_PATH = ROOT / "data" / "raw.json"
@@ -20,19 +21,11 @@ class FetchError(RuntimeError):
 
 def tls_diagnostic(error, key):
     """Extract only OpenSSL verification metadata, never a request URL."""
-    pending, seen = [error], set()
-    while pending:
-        item = pending.pop()
-        if id(item) in seen:
-            continue
-        seen.add(id(item))
-        if isinstance(item, ssl.SSLCertVerificationError):
-            code = getattr(item, "verify_code", "unknown")
-            reason = str(getattr(item, "verify_message", "certificate validation failed"))
-            return f"（驗證碼 {code}：{reason.replace(key, '[REDACTED]')}）"
-        if isinstance(item, BaseException):
-            pending.extend(item.args)
-            pending.extend([item.__cause__, item.__context__, getattr(item, "reason", None)])
+    item = verification_error(error)
+    if item is not None:
+        code = getattr(item, "verify_code", "unknown")
+        reason = str(getattr(item, "verify_message", "certificate validation failed"))
+        return f"（驗證碼 {code}：{reason.replace(key, '[REDACTED]')}）"
     return ""
 
 
@@ -46,7 +39,7 @@ def fetch_forecast(raw_path=RAW_PATH):
     if not key:
         raise FetchError("尚未設定 CWA_API_KEY，請在本機 .env 或 Streamlit Cloud 的 Settings → Secrets 填入中央氣象署 API Key。")
     try:
-        response = requests.get(
+        response = get_cwa(
             API_URL, params={"Authorization": key, "format": "JSON"},
             timeout=(10, 45),
         )

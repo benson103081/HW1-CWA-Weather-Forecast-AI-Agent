@@ -1,4 +1,5 @@
-requests>=2.32,<3
+requests>=2.32.3,<3
+certifi>=2024.8.30
 python-dotenv>=1.0,<2
 streamlit>=1.40,<2
 folium>=0.19,<1

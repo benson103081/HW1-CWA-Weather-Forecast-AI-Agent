@@ -89,7 +89,7 @@ SQLite 位於 `data/weather.db`，資料表為 `forecast(region, date, min_temp,
 .\.venv\Scripts\python.exe -m pip check
 ```
 
-33 個測試涵蓋抓取錯誤、金鑰遮蔽、跨日與時區處理、溫度時段配對、22 縣市完整性、SQLite upsert／交易回復，以及 Streamlit 更新、日期切換、無 Key、無資料及失敗後保留資料。單元測試使用合成資料與暫存資料庫，不呼叫真實 API。
+47 個測試涵蓋抓取錯誤、金鑰遮蔽、跨日與時區處理、溫度時段配對、22 縣市完整性、SQLite upsert／交易回復、TLS 相容處理，以及 Streamlit 更新、日期切換、無 Key、無資料及失敗後保留資料。單元測試使用合成資料與暫存資料庫，不呼叫真實 API。
 
 另提供真實瀏覽器驗證（需已安裝 Google Chrome、設定 Key，並先啟動本機 App）：
 
@@ -138,6 +138,10 @@ CWA_API_KEY = "填入真正的中央氣象署授權碼"
 請將引號內文字替換為本機 `.env` 中的授權碼，不要填入範例文字，也不要在前面加 `[section]`。本機 `.env` 不會自動上傳至雲端。修改後儲存，必要時 Reboot app，再按「更新資料」。`.streamlit/secrets.toml` 同樣不得提交。
 
 API 錯誤會顯示 HTTP 狀態：401 為授權失敗；403 為拒絕存取（需確認權限或來源限制）；429 為請求過於頻繁；5xx 為來源服務錯誤。逾時、TLS 與 DNS／網路錯誤分別提示，訊息不包含金鑰或請求網址。雲端 SQLite 是可重建的快取，重啟或重新部署後可能需要再次更新資料。
+
+### CWA TLS 相容性
+
+CWA 使用的 TWCA 憑證鏈在較新 OpenSSL 的嚴格 X.509 檢查下可能回報驗證碼 86（`Missing Subject Key Identifier`），本機已重現。`src/tls.py` 僅在這個特定錯誤時，對 CWA 主機使用傳統 X.509 擴充欄位相容規則重試；仍啟用 `CERT_REQUIRED`、主機名稱驗證、憑證簽章與有效期限驗證，最低 TLS 1.2。沒有使用 `verify=False`，也不修改全域 SSL 設定。過期、未知簽發者或主機名稱錯誤不會使用此重試。
 
 ## Git
 
