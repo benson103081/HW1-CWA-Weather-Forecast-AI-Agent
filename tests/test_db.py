@@ -12,13 +12,13 @@ def test_upsert_updates_without_duplicates(tmp_path, payload):
     init_db(path)
     assert list_dates(path) == []
     rows = parse_forecast(payload)
-    assert upsert_forecasts(rows, path) == 12
+    assert upsert_forecasts(rows, path) == 44
     before = get_forecasts("2026-09-24", path)
     for row in rows:
         row["max_temp"] = 35
     upsert_forecasts(rows, path)
     after = get_forecasts("2026-09-24", path)
-    assert len(after) == 6
+    assert len(after) == 22
     assert all(row["max_temp"] == 35 for row in after)
     assert after[0]["updated_at"] >= before[0]["updated_at"]
     assert list_dates(path) == ["2026-09-24", "2026-09-25"]

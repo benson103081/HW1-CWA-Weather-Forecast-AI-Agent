@@ -10,7 +10,7 @@ import requests
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW_PATH = ROOT / "data" / "raw.json"
-API_URL = "https://opendata.cwa.gov.tw/fileapi/v1/opendataapi/F-A0010-001"
+API_URL = "https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-091"
 
 
 class FetchError(RuntimeError):

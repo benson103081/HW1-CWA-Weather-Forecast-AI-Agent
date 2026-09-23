@@ -13,8 +13,7 @@ def test_missing_key(monkeypatch, tmp_path):
         fetch.fetch_forecast(tmp_path / "raw.json")
 
 
-def test_fetch_and_save(monkeypatch, tmp_path):
-    payload = {"cwaopendata": {"dataset": {"location": []}}}
+def test_fetch_and_save(monkeypatch, tmp_path, payload):
     response = Mock()
     response.json.return_value = payload
     get = Mock(return_value=response)
@@ -24,6 +23,7 @@ def test_fetch_and_save(monkeypatch, tmp_path):
     assert fetch.fetch_forecast(path) == payload
     assert json.loads(path.read_text(encoding="utf-8")) == payload
     assert get.call_args.kwargs["timeout"] == (10, 45)
+    assert get.call_args.args[0].endswith("/api/v1/rest/datastore/F-D0047-091")
 
 
 @pytest.mark.parametrize("failure", [requests.Timeout("secret-key"), requests.HTTPError("secret-key"), ValueError("secret-key")])
