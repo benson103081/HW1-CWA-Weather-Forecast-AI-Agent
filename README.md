@@ -127,8 +127,6 @@ requirements.txt       # App 與單元測試套件
 requirements-dev.txt   # 額外瀏覽器驗證工具
 ```
 
-## Git
-
 ## Streamlit Community Cloud
 
 部署時選擇此儲存庫、`main` 分支、`app.py`，Python 3.12。在 Settings → Secrets 設定根層級的 TOML：
