@@ -1,10 +1,22 @@
 import json
+import ssl
 from unittest.mock import Mock
 
 import pytest
 import requests
 
 from src import fetch
+
+
+def test_tls_diagnostic_only_exposes_verification_metadata():
+    inner = ssl.SSLCertVerificationError(1, "URL contains secret-key")
+    inner.verify_code = 20
+    inner.verify_message = "unable to get local issuer certificate"
+    error = requests.exceptions.SSLError(inner)
+    detail = fetch.tls_diagnostic(error, "secret-key")
+    assert "20" in detail
+    assert "unable to get local issuer certificate" in detail
+    assert "secret-key" not in detail
 
 
 def test_missing_key(monkeypatch, tmp_path):

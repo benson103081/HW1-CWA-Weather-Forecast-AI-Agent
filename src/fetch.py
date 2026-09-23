@@ -2,6 +2,7 @@
 
 import json
 import os
+import ssl
 from pathlib import Path
 import tempfile
 
@@ -15,6 +16,24 @@ API_URL = "https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-091"
 
 class FetchError(RuntimeError):
     """A safe, user-facing fetch error."""
+
+
+def tls_diagnostic(error, key):
+    """Extract only OpenSSL verification metadata, never a request URL."""
+    pending, seen = [error], set()
+    while pending:
+        item = pending.pop()
+        if id(item) in seen:
+            continue
+        seen.add(id(item))
+        if isinstance(item, ssl.SSLCertVerificationError):
+            code = getattr(item, "verify_code", "unknown")
+            reason = str(getattr(item, "verify_message", "certificate validation failed"))
+            return f"（驗證碼 {code}：{reason.replace(key, '[REDACTED]')}）"
+        if isinstance(item, BaseException):
+            pending.extend(item.args)
+            pending.extend([item.__cause__, item.__context__, getattr(item, "reason", None)])
+    return ""
 
 
 def get_api_key():
@@ -45,8 +64,8 @@ def fetch_forecast(raw_path=RAW_PATH):
         raise FetchError(message) from None
     except requests.Timeout:
         raise FetchError("中央氣象署 API 連線逾時，請稍後重試；若只有雲端失敗，請檢查雲端對外連線。") from None
-    except requests.exceptions.SSLError:
-        raise FetchError("中央氣象署 API 的 TLS 憑證驗證失敗，請確認部署環境的憑證套件與網路設定。") from None
+    except requests.exceptions.SSLError as error:
+        raise FetchError("中央氣象署 API 的 TLS 憑證驗證失敗" + tls_diagnostic(error, key) + "，請確認部署環境的憑證套件與網路設定。") from None
     except requests.ConnectionError:
         raise FetchError("無法連線至中央氣象署 API（DNS 或網路連線失敗），請稍後重試。") from None
     except requests.RequestException:
