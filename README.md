@@ -2,6 +2,8 @@
 
 使用 Python、中央氣象署 CWA API、SQLite 與 Streamlit，展示臺灣 **22 縣市（含離島）一週天氣預報**。支援日期選擇、folium 互動地圖、最低／最高溫表格與一鍵更新。
 
+**[開啟公開成果網頁](https://hw1-cwa-weather-forecast-ai-agent-bhuhdhry26uczpbj9bxnz2.streamlit.app/)** — 不需安裝 Python 或提供自己的 API Key；若網站休眠，先按平台的喚醒按鈕。進入後按「更新資料」取得最新預報。
+
 ## 資料來源
 
 採用 `F-D0047-091`「臺灣未來 1 週天氣預報」，端點為：
@@ -142,6 +144,10 @@ API 錯誤會顯示 HTTP 狀態：401 為授權失敗；403 為拒絕存取（�
 ### CWA TLS 相容性
 
 CWA 使用的 TWCA 憑證鏈在較新 OpenSSL 的嚴格 X.509 檢查下可能回報驗證碼 86（`Missing Subject Key Identifier`），本機已重現。`src/tls.py` 僅在這個特定錯誤時，對 CWA 主機使用傳統 X.509 擴充欄位相容規則重試；仍啟用 `CERT_REQUIRED`、主機名稱驗證、憑證簽章與有效期限驗證，最低 TLS 1.2。沒有使用 `verify=False`，也不修改全域 SSL 設定。過期、未知簽發者或主機名稱錯誤不會使用此重試。
+
+2026-09-23 已在公開 Cloud 網站實測「更新資料」成功，取得 176 筆縣市日期預報並顯示表格。預報跨日且首末時段可能不完整，因此一週預報有時會涵蓋 8 個開始日期。
+
+公開網站的日期切換、22 個標記與所選日期的 popup 均已實測通過。[雲端成果截圖](docs/screenshots/cloud.png)。
 
 ## Git
 
