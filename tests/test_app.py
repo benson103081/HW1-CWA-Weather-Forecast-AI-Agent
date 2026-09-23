@@ -3,7 +3,6 @@ from pathlib import Path
 from streamlit.testing.v1 import AppTest
 
 from src import db, fetch
-from src.parse import parse_forecast
 
 APP = Path(__file__).resolve().parents[1] / "app.py"
 
@@ -37,7 +36,7 @@ def test_update_and_retain_data_on_failure(monkeypatch, tmp_path, payload):
     assert not app.exception
     assert app.success
     assert len(app.selectbox[0].options) == 2
-    assert len(app.dataframe[0].value) == 6
+    assert len(app.dataframe[0].value) == 22
     app.selectbox[0].select("2026-09-25").run()
     assert set(app.dataframe[0].value["最高溫 (°C)"]) == {32.0}
 
@@ -48,4 +47,4 @@ def test_update_and_retain_data_on_failure(monkeypatch, tmp_path, payload):
     app.button[0].click().run()
     assert not app.exception
     assert app.error[0].value == "API 暫時無法使用"
-    assert len(app.dataframe[0].value) == 6
+    assert len(app.dataframe[0].value) == 22
