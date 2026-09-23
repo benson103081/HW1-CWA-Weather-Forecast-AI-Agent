@@ -31,6 +31,8 @@ def fetch_forecast(raw_path=RAW_PATH):
             API_URL, params={"Authorization": key, "format": "JSON"},
             timeout=(10, 45),
         )
+        if response.status_code == 404:
+            raise FetchError("中央氣象署 API 回傳 HTTP 404，指定資料集目前無法取得，請稍後重試或確認服務狀態。")
         response.raise_for_status()
         payload = response.json()
     except requests.RequestException:

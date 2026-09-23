@@ -40,3 +40,11 @@ def test_errors_hide_credentials_and_keep_cache(monkeypatch, tmp_path, failure):
 
 def test_field_paths_include_later_list_fields():
     assert set(fetch.field_paths({"items": [{"a": 1}, {"b": 2}]})) == {"$.items[].a", "$.items[].b"}
+
+
+def test_api_404(monkeypatch, tmp_path):
+    monkeypatch.setattr(fetch, "get_api_key", lambda: "test-key")
+    monkeypatch.setattr(fetch.requests, "get", Mock(return_value=Mock(status_code=404)))
+    with pytest.raises(fetch.FetchError, match="HTTP 404"):
+        fetch.fetch_forecast(tmp_path / "raw.json")
+    assert not (tmp_path / "raw.json").exists()
